@@ -1,0 +1,25 @@
+{
+    "alarms": [
+        {
+            "ref": "Itemp",
+            "period": 15,
+            "max_value": 30,
+            "min_value": 15
+        },
+        {
+            "ref": "Ipress",
+            "period": 15,
+            "min_value": 1.1
+        },
+        {
+            "ref": "Ivb",
+            "diff": 1,
+            "period": 15,
+            "max_value": 10
+        },
+        {
+            "ref": "Ivc",
+            "period": 15
+        }
+    ]
+}

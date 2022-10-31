@@ -1,42 +1,81 @@
 #include "modbus-rtu.h"
 
-#include "rs485.h"
-
 #define RS485_GPIO_RX 27
 #define RS485_GPIO_TX 14
 #define RS485_GPIO_RTS 13
 
 #define MAX_VALUE_LEN 4 // maximum payload data that can be received and stored through modbusrtu
 
+#ifndef UNITTEST
 RS485Comm rs485comm(&Serial1, (uint8_t)RS485_GPIO_RX, (uint8_t)RS485_GPIO_TX, (uint8_t)RS485_GPIO_RTS);
+#endif
 
 #define MAX_BUFFER_SIZE 255
 
 String error_msg = "";
 
 ModbusRTU::ModbusRTU(){
-
+	#ifndef UNITTEST
 	rs485comm.begin(1);
+	#endif
 }
+
+#ifdef UNITTEST
+char response[256];
+uint8_t len_response = 0;
+bool ModbusRTU::rs485_set_response(uint8_t* data, uint16_t size){
+	if(size > 255)
+		return false;
+
+	uint16_t crc_ = crc(data,size);
+  data[size+1] = crc_>>8;
+  data[size] = (uint8_t)crc_;
+
+	len_response = size+2;
+	memset(response,0,256);
+	memcpy(response,data,len_response);
+	return true;
+}
+#endif
 
 uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uint16_t len, uint8_t* data, uint16_t* size){
 
+	uint16_t buffer_size = *size;
+
   if(!ModbusRTU::encode(unit_id,fc,address,len,(uint8_t*)nullptr,data, size)){
+		#ifndef UNITTEST
     Serial.println("Failed enconding modbus..");
-    return 0x8A;
+		#else
+		std::cout << "Failed enconding modbus.." << std::endl;
+		#endif
+    return ERROR_MODBUS_ENC;
   }
 
   #ifdef DEBUG_LOG
   log("write: ",data,*size);
   #endif
+	#ifndef UNITTEST
   rs485comm.write(data,*size);
+	*size = buffer_size;
   len = rs485comm.read(data,*size);
+	#else
+		// fill buffer
+		memset(data,0,buffer_size);
+		if(len_response <= buffer_size){
+			len = len_response;
+			memcpy(data,response,len_response);
+		}else len = 0;
+	#endif
   #ifdef DEBUG_LOG
   log("response: ",data,len);
   #endif
   if(len == 0){
+		#ifndef UNITTEST
     Serial.println("No data returned from slave..");
-    return 0x8B; // GW target device failed to respond
+		#else
+		std::cout << "No data returned from slave.." << std::endl;
+		#endif
+    return ERROR_MODBUS_GW_NO_RSP; // GW target device failed to respond
   }
 
   if(ModbusRTU::valid(data,len)){
@@ -51,7 +90,7 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
       log("rtu.len: ",rtu.len);
       #endif
       if(rtu.fc >= 0x80)
-        return rtu.fc;
+        return rtu.len;
       else{
         if(rtu.len <= MAX_VALUE_LEN){
           memcpy(&data[0],&rtu.data[0],rtu.len);
@@ -62,15 +101,20 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
           return 0;
         }
         else
-          return 0x80; // change this error - log("data returned too big");
+          return ERROR_MODBUS_NES; // change this error - log("data returned too big");
       }
 
     }else
-      return 0x80; // change this error - log("error reading rs485 sensor");
+      return ERROR_MODBUS_DEC; // change this error - log("error reading rs485 sensor");
   }else{
+		#ifndef UNITTEST
     Serial.println("Received frame is not valid..");
-    Serial.println(ModbusRTU::getLastError());
-    return 0x80;  // change this error - log("error reading rs485 sensor");
+		Serial.println(ModbusRTU::getLastError());
+		#else
+		std::cout << "Received frame is not valid.." << std::endl;
+		std::cout << ModbusRTU::getLastError() << std::endl;
+		#endif
+    return ERROR_MODBUS_RFNV;  // change this error - log("error reading rs485 sensor");
   }
 
   return 0;
@@ -78,12 +122,20 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
 
 uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, uint16_t len, uint8_t* data, uint16_t* size){
 
-  if(*size < 2)
-    return 0x03; // no payload
+  if(*size < 2){
+		#ifdef DEBUG_LOG
+	  log("no payload");
+	  #endif
+		return ERROR_MODBUS_ENC; // no payload
+	}
 
   uint16_t payload_size = ((data[0]-'0')<<4)|(data[1]-'0');
-  if(payload_size*2+2 != *size)
-    return 0x03; // invalid frame
+  if(payload_size*2+2 != *size){
+		#ifdef DEBUG_LOG
+	  log("invalid frame");
+	  #endif
+		return ERROR_MODBUS_ENC; // invalid frame
+	}
 
   uint8_t payload[payload_size+1];
   payload[0] = payload_size;
@@ -92,17 +144,29 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
   }
   payload_size += 9;
   uint8_t frame[payload_size];
-  if(!ModbusRTU::encode(unit_id,fc,address,len,payload,frame, &payload_size))
-      return 0x03;
+  if(!ModbusRTU::encode(unit_id,fc,address,len,payload,frame, &payload_size)){
+		#ifdef DEBUG_LOG
+	  log("error decoding");
+	  #endif
+		return ERROR_MODBUS_ENC;
+	}
 
+	#ifndef UNITTEST
   rs485comm.write(frame,payload_size);
-  memset(frame,0,payload_size);
-  payload_size = rs485comm.read(frame,payload_size);
+	memset(frame,0,*size);
+	*size = rs485comm.read(frame,payload_size);
+	#else
+	memset(frame,0,*size);
+	if(len_response <= *size){
+		memcpy(data,response,len_response);
+		*size = len_response;
+	}
+	#endif
   #ifdef DEBUG_LOG
   log("frame:",frame,payload_size);
   #endif
   if(payload_size == 0)
-    return 0x0B; // GW target device failed to respond
+    return ERROR_MODBUS_GW_NO_RSP; // GW target device failed to respond
 
   if(ModbusRTU::valid(frame,payload_size)){
     modbus_rtu rtu;
@@ -116,7 +180,7 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
       log("rtu.len: ",rtu.len);
       #endif
       if(rtu.fc >= 0x80)
-        return rtu.fc;
+        return rtu.len;
       else{
         if(rtu.len <= MAX_VALUE_LEN){
           memcpy(&data[0],&rtu.data[0],rtu.len);
@@ -127,12 +191,12 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
           return 0;
         }
         else
-          return 0x08; // change this error - log("data returned too big");
+          return ERROR_MODBUS_NES; // change this error - log("data returned too big");
       }
     }else
-      return 0x08; // change this error - log("error reading rs485 sensor");
+      return ERROR_MODBUS_DEC; // change this error - log("error reading rs485 sensor");
   }else
-    return 0x08;  // change this error - log("error reading rs485 sensor");
+    return ERROR_MODBUS_RFNV;  // change this error - log("error reading rs485 sensor");
 
   return 0;
 }

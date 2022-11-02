@@ -33,7 +33,6 @@ In case of error, the error can be obtained calling getLastError method.
 
 ### RS485 read
 
-
 * @param unit_id - unit id
 * @param fc - function code
 * @param address
@@ -57,7 +56,6 @@ free(data);
 
 ### RS485 write
 
-/**
 * @param unit_id - unit id
 * @param fc - function code
 * @param address
@@ -65,7 +63,7 @@ free(data);
 * @param data - pointer to payload to be written
 * @param size - size of payload to be written
 * @return error - 0 in case of no error
-*/
+
 ```
 static uint8_t rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, uint16_t len, uint8_t* data, uint16_t* size)
 ```
@@ -84,9 +82,9 @@ free(data);
 ```
 
 ### Get error
-/**
+
 * @return error in string format
-*/
+
 ```
 static String getLastError()
 ```

@@ -33,7 +33,7 @@ In case of error, the error can be obtained calling getLastError method.
 
 ### RS485 read
 
-/*
+
 * @param unit_id - unit id
 * @param fc - function code
 * @param address
@@ -41,7 +41,7 @@ In case of error, the error can be obtained calling getLastError method.
 * @param data - pointer to received payload
 * @param size - maximum size of passed pointer, returns length of data read
 * @return error - 0 in case of no error
-*/
+
 ```
 static uint8_t rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uint16_t len, uint8_t* data, uint16_t* size)
 ```

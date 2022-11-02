@@ -33,7 +33,7 @@ In case of error, the error can be obtained calling getLastError method.
 
 ### RS485 read
 
-/**
+/*
 * @param unit_id - unit id
 * @param fc - function code
 * @param address

@@ -29,6 +29,9 @@ In case of error, the error can be obtained calling getLastError method.
 ## TODO
   Allow configurations for serial port
 
+## Limitations
+  rs485_read method can only store MAX_VALUE_LEN bytes of retrieved payload (check modbus-rtu file to see macro value)
+
 ## Public Methods - Extension
 
 ### RS485 read

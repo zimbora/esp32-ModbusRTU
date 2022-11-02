@@ -4,7 +4,7 @@
 #define RS485_GPIO_TX 14
 #define RS485_GPIO_RTS 13
 
-#define MAX_VALUE_LEN 4 // maximum payload data that can be received and stored through modbusrtu
+#define MAX_VALUE_LEN 8 // maximum payload data that can be received and stored through modbusrtu
 
 #ifndef UNITTEST
 RS485Comm rs485comm(&Serial1, (uint8_t)RS485_GPIO_RX, (uint8_t)RS485_GPIO_TX, (uint8_t)RS485_GPIO_RTS);
@@ -129,46 +129,44 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
 		return ERROR_MODBUS_ENC; // no payload
 	}
 
-  uint16_t payload_size = ((data[0]-'0')<<4)|(data[1]-'0');
-  if(payload_size*2+2 != *size){
+  uint16_t payload_size = data[0];
+  if(len*2 != payload_size){
 		#ifdef DEBUG_LOG
 	  log("invalid frame");
 	  #endif
 		return ERROR_MODBUS_ENC; // invalid frame
 	}
 
-  uint8_t payload[payload_size+1];
-  payload[0] = payload_size;
-  for(uint8_t i=1;i<*size;i++){
-    payload[i] = ((data[i*2]-'0')<<4)|(data[i*2+1]-'0');
-  }
   payload_size += 9;
   uint8_t frame[payload_size];
-  if(!ModbusRTU::encode(unit_id,fc,address,len,payload,frame, &payload_size)){
+  if(!ModbusRTU::encode(unit_id,fc,address,len,data,frame, &payload_size)){
 		#ifdef DEBUG_LOG
 	  log("error decoding");
 	  #endif
 		return ERROR_MODBUS_ENC;
 	}
 
+	#ifdef DEBUG_LOG
+  log(">>",frame,payload_size);
+  #endif
 	#ifndef UNITTEST
   rs485comm.write(frame,payload_size);
 	memset(frame,0,*size);
 	*size = rs485comm.read(frame,payload_size);
 	#else
-	memset(frame,0,*size);
-	if(len_response <= *size){
-		memcpy(data,response,len_response);
+	memset(frame,0,payload_size);
+	if(len_response <= payload_size){
+		memcpy(frame,response,len_response);
 		*size = len_response;
 	}
 	#endif
   #ifdef DEBUG_LOG
-  log("frame:",frame,payload_size);
+  log("<<",frame,*size);
   #endif
-  if(payload_size == 0)
+  if(*size == 0)
     return ERROR_MODBUS_GW_NO_RSP; // GW target device failed to respond
 
-  if(ModbusRTU::valid(frame,payload_size)){
+  if(ModbusRTU::valid(frame,*size)){
     modbus_rtu rtu;
     #ifdef DEBUG_LOG
     log("response valid");

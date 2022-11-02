@@ -4,7 +4,7 @@
 CXXFLAGS += -std=c++11
 
 MACROS = -DDEBUG
-MACROS += -DDEBUG_LOG
+#MACROS += -DDEBUG_LOG
 
 all: modbusrtu
 

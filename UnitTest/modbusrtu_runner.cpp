@@ -9,12 +9,12 @@
 
 // Editable by tester
 uint8_t test[] = {
-  false, // test1 - testing read
-  false, // test2 - testing read
-  false, // test3 - testing read
-  false, // test4 - testing read
-  false, // test5 - testing read
-  false, // test6 - testing read
+  true, // test1 - testing read
+  true, // test2 - testing read
+  true, // test3 - testing read
+  true, // test4 - testing read
+  true, // test5 - testing read
+  true, // test6 - testing read
   true  // test7 - testing write
 };
 
@@ -60,9 +60,12 @@ uint8_t test_read(uint8_t unit_id,uint8_t fc,uint16_t address,uint8_t len, uint8
 
 uint8_t test_write(uint8_t unit_id,uint8_t fc,uint16_t address,uint8_t len, uint8_t* payload, uint8_t* response, uint8_t size){
 
-    modbusrtu.rs485_set_response(response,size);
+    if(!modbusrtu.rs485_set_response(response,size)){
+      printf("couldn't set response \n");
+      return 255;
+    }
 
-    uint16_t max_size = 4;
+    uint16_t max_size = size+2;
     uint8_t error = modbusrtu.rs485_write(unit_id,fc,address,len,payload,&max_size);
     if(error){
       printf("error: %d \n",error);
@@ -200,10 +203,10 @@ bool modbusrtu_test7(){
   uint8_t fc = 16;
   uint16_t address = 0;
   uint8_t len = 2;
-  uint8_t data[] = {0x00,0x00,0x01,0x02};
+  uint8_t data[] = {0x04,0x00,0x00,0x01,0x02};
   uint8_t expected_error = 0x00;
 
-  uint8_t response[] = {1,16,4,0,0};
+  uint8_t response[] = {1,16,0,0,0,2,0,0};
   uint8_t size_rsp = (uint8_t)(sizeof(response)/sizeof(uint8_t)-2);
 
   if(response[1] >= 0x80)

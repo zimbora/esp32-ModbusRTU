@@ -1,22 +1,24 @@
 #include "modbus-rtu.h"
 
-#define RS485_GPIO_RX 27
-#define RS485_GPIO_TX 14
-#define RS485_GPIO_RTS 13
-
 #define MAX_VALUE_LEN 8 // maximum payload data that can be received and stored through modbusrtu
 
 #ifndef UNITTEST
-RS485Comm rs485comm(&Serial1, (uint8_t)RS485_GPIO_RX, (uint8_t)RS485_GPIO_TX, (uint8_t)RS485_GPIO_RTS);
+RS485Comm rs485comm;
 #endif
 
 #define MAX_BUFFER_SIZE 255
 
 String error_msg = "";
 
-ModbusRTU::ModbusRTU(){
+void ModbusRTU::setup(HardwareSerial* serial, uint8_t rx, uint8_t tx, uint8_t rts){
 	#ifndef UNITTEST
-	rs485comm.begin(1);
+	rs485comm.setup(serial, rx, tx, rts);
+	#endif
+}
+
+void ModbusRTU::begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, int8_t retries_){
+	#ifndef UNITTEST
+	rs485comm.begin( mode_, baudrate_, config_, retries_);
 	#endif
 }
 

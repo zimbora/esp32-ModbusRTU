@@ -15,8 +15,9 @@ class RS485Comm {
 
   public:
     // constructor
-    RS485Comm(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin);
-    RS485Comm(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin, bool logic);
+    RS485Comm(){};
+    void setup(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin);
+    void setup(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin, bool logic);
     // initialize RS485 comunication
     void begin(int8_t mode, uint32_t baudrate = 9600, uint32_t config = SERIAL_8N1, int8_t retries = 3);
     // write data to RS485
@@ -33,7 +34,5 @@ class RS485Comm {
     int read_byte();
 
 };
-
-extern RS485Comm rs485comm;
 
 #endif

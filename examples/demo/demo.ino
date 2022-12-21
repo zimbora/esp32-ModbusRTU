@@ -1,6 +1,11 @@
 
 #include "modbus-rtu.h"
 
+
+#define RS485_GPIO_RX 27
+#define RS485_GPIO_TX 14
+#define RS485_GPIO_RTS 13
+
 ModbusRTU modbusrtu;
 
 void setup() {
@@ -8,9 +13,11 @@ void setup() {
 
   Serial.begin(115200);
 
+  modbusrtu.setup(&Serial1,RS485_GPIO_RX,RS485_GPIO_TX,RS485_GPIO_RTS);
 }
 
 uint8_t loop_counter = 1;
+
 void loop() {
   // put your main code here, to run repeatedly:
 
@@ -18,7 +25,7 @@ void loop() {
   uint8_t* data = (uint8_t*)malloc(size);
   if(data != nullptr){
     Serial.println("Reading rs485..");
-    uint8_t error = modbusrtu.rs485_read(1,3,0,2,data,&size);
+    uint8_t error = modbusrtu.rs485_read(1,3,1,2,data,&size);
     if(error == 0){
       Serial.print("res: ");
       uint8_t i = 0;
@@ -34,12 +41,13 @@ void loop() {
     }
 
     memset(data,0,32);
+    Serial.println();
     Serial.println("Writing rs485..");
     data[0] = 0x00;
     data[1] = 0x00;
     data[2] = 0x00;
     data[3] = loop_counter++;
-    uint8_t error = modbusrtu.rs485_write(1,16,0,2,data,&size);
+    error = modbusrtu.rs485_write(1,16,0,2,data,&size);
     if(error == 0){
       Serial.print("res: ");
       uint8_t i = 0;

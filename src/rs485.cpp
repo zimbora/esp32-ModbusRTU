@@ -13,19 +13,25 @@ int8_t retries = 0;
 uint32_t baudrate = 0;
 uint32_t config = 0;
 
-RS485Comm::RS485Comm(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin){
+void RS485Comm::setup(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin){
+
   rs485 = serial;
   RX_GPIO = rx_pin;
   TX_GPIO = tx_pin;
   RTS_GPIO = rts_pin;
+
+  begin(1);
 }
 
-RS485Comm::RS485Comm(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin, bool logic){
+void RS485Comm::setup(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin, bool logic){
+
   rs485 = serial;
   RX_GPIO = rx_pin;
   TX_GPIO = tx_pin;
   RTS_GPIO = rts_pin;
   RTS_LOGIC = logic;
+
+  begin(1);
 }
 
 void RS485Comm::begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, int8_t retries_) {
@@ -59,8 +65,6 @@ void RS485Comm::begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, int8_t
 	DBGLOG(Info,"parity: "+String(config));
 	DBGLOG(Info,"SERIAL_8N1: "+String(SERIAL_8N1));
 
-
-	//rs485->begin(baudrate,config,27,14);//, settings.rs485.config);
 	rs485->begin(baudrate,config,RX_GPIO,TX_GPIO);
 
 	DBGLOG(Info,"rs485: init");

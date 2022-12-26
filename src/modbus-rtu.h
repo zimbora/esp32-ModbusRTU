@@ -43,6 +43,13 @@ public:
 private:
 	static bool encode(uint8_t slave_id, uint8_t fc, uint16_t address, uint16_t len, uint8_t* data, uint8_t *frame, uint16_t* size);
 	static uint16_t encode(uint8_t *message, uint16_t message_size, uint8_t *response);
+	static void log_hex(String direction,uint8_t* data,uint16_t size){
+		Serial.print("["+direction+"]: ");
+		for(uint16_t i=0; i<size; i++){
+			Serial.printf("%x ",data[i]);
+		}
+		Serial.println();
+	}
 };
 
 #endif

@@ -25,7 +25,7 @@ void loop() {
   uint8_t* data = (uint8_t*)malloc(size);
   if(data != nullptr){
     Serial.println("Reading rs485..");
-    uint8_t error = modbusrtu.rs485_read(1,3,1,2,data,&size);
+    uint8_t error = modbusrtu.rs485_read(1,4,0,2,data,&size);
     if(error == 0){
       Serial.print("res: ");
       uint8_t i = 0;
@@ -43,18 +43,14 @@ void loop() {
     memset(data,0,32);
     Serial.println();
     Serial.println("Writing rs485..");
-    data[0] = 0x00;
-    data[1] = 0x00;
-    data[2] = 0x00;
-    data[3] = loop_counter++;
-    error = modbusrtu.rs485_write(1,16,0,2,data,&size);
+    data[0] = 0x04;
+    data[1] = 0x3F;
+    data[2] = 0x80;
+    data[3] = 0x00;
+    data[4] = 0x00;
+    error = modbusrtu.rs485_write(1,16,22,2,data,&size);
     if(error == 0){
-      Serial.print("res: ");
-      uint8_t i = 0;
-      while(i<size){
-        Serial.printf("0x%x ",data[i++]);
-      }
-      Serial.println();
+      Serial.println("packet written successfully");
     }else{
       Serial.printf("error: 0x%x \n",error);
       String error_msg = modbusrtu.getLastError();

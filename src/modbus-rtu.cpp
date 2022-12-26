@@ -97,7 +97,7 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
         if(rtu.len <= MAX_VALUE_LEN){
           memcpy(&data[0],&rtu.data[0],rtu.len);
           #ifdef DEBUG_LOG
-          log("data: ",data,rtu.len);
+          log_hex("data: ",data,rtu.len);
           #endif
           *size = rtu.len;
           return 0;
@@ -148,9 +148,9 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
 		return ERROR_MODBUS_ENC;
 	}
 
-	#ifdef DEBUG_LOG
-  log(">>",frame,payload_size);
-  #endif
+	//#ifdef DEBUG_LOG
+  log_hex(">>",frame,payload_size);
+  //#endif
 	#ifndef UNITTEST
   rs485comm.write(frame,payload_size);
 	memset(frame,0,*size);
@@ -162,9 +162,9 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
 		*size = len_response;
 	}
 	#endif
-  #ifdef DEBUG_LOG
-  log("<<",frame,*size);
-  #endif
+  //#ifdef DEBUG_LOG
+  log_hex("<<",frame,*size);
+  //#endif
   if(*size == 0)
     return ERROR_MODBUS_GW_NO_RSP; // GW target device failed to respond
 

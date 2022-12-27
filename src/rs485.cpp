@@ -19,8 +19,6 @@ void RS485Comm::setup(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, ui
   RX_GPIO = rx_pin;
   TX_GPIO = tx_pin;
   RTS_GPIO = rts_pin;
-
-  begin(1);
 }
 
 void RS485Comm::setup(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin, bool logic){
@@ -30,11 +28,9 @@ void RS485Comm::setup(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, ui
   TX_GPIO = tx_pin;
   RTS_GPIO = rts_pin;
   RTS_LOGIC = logic;
-
-  begin(1);
 }
 
-void RS485Comm::begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, int8_t retries_) {
+void RS485Comm::begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, uint8_t retries_) {
 
   mode = mode_;
   retries = retries_;

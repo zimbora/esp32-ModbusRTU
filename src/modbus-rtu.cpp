@@ -16,7 +16,7 @@ void ModbusRTU::setup(HardwareSerial* serial, uint8_t rx, uint8_t tx, uint8_t rt
 	#endif
 }
 
-void ModbusRTU::begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, int8_t retries_){
+void ModbusRTU::begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, uint8_t retries_){
 	#ifndef UNITTEST
 	rs485comm.begin( mode_, baudrate_, config_, retries_);
 	#endif
@@ -46,7 +46,9 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
 
   if(!ModbusRTU::encode(unit_id,fc,address,len,(uint8_t*)nullptr,data, size)){
 		#ifndef UNITTEST
+		#ifdef WARNING_LOG
     Serial.println("Failed enconding modbus..");
+		#endif WARNING_LOG
 		#else
 		std::cout << "Failed enconding modbus.." << std::endl;
 		#endif
@@ -54,7 +56,7 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
   }
 
   #ifdef DEBUG_LOG
-  log("write: ",data,*size);
+	log_hex(">>",data,*size);
   #endif
 	#ifndef UNITTEST
   rs485comm.write(data,*size);
@@ -69,11 +71,13 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
 		}else len = 0;
 	#endif
   #ifdef DEBUG_LOG
-  log("response: ",data,len);
+	log_hex("<<",data,len);
   #endif
   if(len == 0){
 		#ifndef UNITTEST
+		#ifdef WARNING_LOG
     Serial.println("No data returned from slave..");
+		#endif
 		#else
 		std::cout << "No data returned from slave.." << std::endl;
 		#endif
@@ -82,11 +86,11 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
 
   if(ModbusRTU::valid(data,len)){
     modbus_rtu rtu;
-    #ifdef DEBUG_LOG
+    #ifdef HIGH_DEBUG_LOG
     log("response valid");
     #endif
     if(ModbusRTU::decode(data,len,&rtu)){
-      #ifdef DEBUG_LOG
+      #ifdef HIGH_DEBUG_LOG
       log("rtu.slave_id: ",rtu.slave_id);
       log("rtu.fc: ",rtu.fc);
       log("rtu.len: ",rtu.len);
@@ -96,7 +100,7 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
       else{
         if(rtu.len <= MAX_VALUE_LEN){
           memcpy(&data[0],&rtu.data[0],rtu.len);
-          #ifdef DEBUG_LOG
+          #ifdef HIGH_DEBUG_LOG
           log_hex("data: ",data,rtu.len);
           #endif
           *size = rtu.len;
@@ -110,8 +114,10 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
       return ERROR_MODBUS_DEC; // change this error - log("error reading rs485 sensor");
   }else{
 		#ifndef UNITTEST
+		#ifdef WARNING_LOG
     Serial.println("Received frame is not valid..");
 		Serial.println(ModbusRTU::getLastError());
+		#endif
 		#else
 		std::cout << "Received frame is not valid.." << std::endl;
 		std::cout << ModbusRTU::getLastError() << std::endl;
@@ -125,7 +131,7 @@ uint8_t ModbusRTU::rs485_read(uint8_t unit_id, uint8_t fc, uint16_t address, uin
 uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, uint16_t len, uint8_t* data, uint16_t* size){
 
   if(*size < 2){
-		#ifdef DEBUG_LOG
+		#ifdef WARNING_LOG
 	  log("no payload");
 	  #endif
 		return ERROR_MODBUS_ENC; // no payload
@@ -133,7 +139,7 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
 
   uint16_t payload_size = data[0];
   if(len*2 != payload_size){
-		#ifdef DEBUG_LOG
+		#ifdef WARNING_LOG
 	  log("invalid frame");
 	  #endif
 		return ERROR_MODBUS_ENC; // invalid frame
@@ -142,15 +148,15 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
   payload_size += 9;
   uint8_t frame[payload_size];
   if(!ModbusRTU::encode(unit_id,fc,address,len,data,frame, &payload_size)){
-		#ifdef DEBUG_LOG
+		#ifdef WARNING_LOG
 	  log("error decoding");
 	  #endif
 		return ERROR_MODBUS_ENC;
 	}
 
-	//#ifdef DEBUG_LOG
+	#ifdef DEBUG_LOG
   log_hex(">>",frame,payload_size);
-  //#endif
+  #endif
 	#ifndef UNITTEST
   rs485comm.write(frame,payload_size);
 	memset(frame,0,*size);
@@ -162,19 +168,19 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
 		*size = len_response;
 	}
 	#endif
-  //#ifdef DEBUG_LOG
+  #ifdef DEBUG_LOG
   log_hex("<<",frame,*size);
-  //#endif
+  #endif
   if(*size == 0)
     return ERROR_MODBUS_GW_NO_RSP; // GW target device failed to respond
 
   if(ModbusRTU::valid(frame,*size)){
     modbus_rtu rtu;
-    #ifdef DEBUG_LOG
+    #ifdef HIGH_DEBUG_LOG
     log("response valid");
     #endif
     if(ModbusRTU::decode(frame,payload_size,&rtu)){
-      #ifdef DEBUG_LOG
+      #ifdef HIGH_DEBUG_LOG
       log("rtu.slave_id: ",rtu.slave_id);
       log("rtu.fc: ",rtu.fc);
       log("rtu.len: ",rtu.len);
@@ -184,8 +190,8 @@ uint8_t ModbusRTU::rs485_write(uint8_t unit_id, uint8_t fc, uint16_t address, ui
       else{
         if(rtu.len <= MAX_VALUE_LEN){
           memcpy(&data[0],&rtu.data[0],rtu.len);
-          #ifdef DEBUG_LOG
-          log("data: ",data,rtu.len);
+          #ifdef HIGH_DEBUG_LOG
+          log_hex("data: ",data,rtu.len);
           #endif
           *size = rtu.len;
           return 0;

@@ -1,5 +1,8 @@
 # esp32-ModbusRTU
 
+## BUGS
+  - !! this packet: 1,16,22,2 used with rs485_read makes program crash
+
 ## Description
 package to read and write on modbus rtu slaves using a serial connection.
 

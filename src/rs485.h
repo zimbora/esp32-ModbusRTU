@@ -19,7 +19,7 @@ class RS485Comm {
     void setup(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin);
     void setup(HardwareSerial* serial, uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin, bool logic);
     // initialize RS485 comunication
-    void begin(int8_t mode, uint32_t baudrate = 9600, uint32_t config = SERIAL_8N1, int8_t retries = 3);
+    void begin(int8_t mode, uint32_t baudrate = 9600, uint32_t config = SERIAL_8N1, uint8_t retries = 3);
     // write data to RS485
     void write(uint8_t data[], uint8_t len);
     // read data from RS485

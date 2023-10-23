@@ -71,6 +71,37 @@ void RS485Comm::begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, uint8_
 	digitalWrite(RTS_GPIO, RTS_LOGIC ? LOW : HIGH);
 }
 
+void RS485Comm::change_config(int8_t mode_, uint32_t baudrate_, uint32_t config_, uint8_t retries_) {
+
+  mode = mode_;
+  retries = retries_;
+  baudrate = baudrate_;
+  config = config_;
+
+	if(mode == 0){
+		DBGLOG(Info,"settings: rs485 disabled");
+	}else if(mode == 1){
+		DBGLOG(Info,"settings: rs485 configured as master");
+	}else if(mode == 2){
+		DBGLOG(Info,"settings: rs485 configured as slave");
+  }else{
+    DBGLOG(Error,"settings: rs485 mode not available");
+  }
+
+	if (mode != 1 && mode != 2) return;
+
+
+	DBGLOG(Info,"rs485: prepare to init");
+	DBGLOG(Info,"active: "+String(mode));
+	DBGLOG(Info,"retries: "+String(retries));
+	DBGLOG(Info,"baudrate: "+String(baudrate));
+	DBGLOG(Info,"parity: "+String(config));
+
+	rs485->begin(baudrate,config,RX_GPIO,TX_GPIO);
+
+	DBGLOG(Info,"rs485: init");
+}
+
 void RS485Comm::write(uint8_t data[], uint8_t len) {
 	if (!mode) return;
 

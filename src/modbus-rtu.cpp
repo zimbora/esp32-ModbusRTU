@@ -22,6 +22,12 @@ void ModbusRTU::begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, uint8_
 	#endif
 }
 
+void ModbusRTU::change_config(int8_t mode_, uint32_t baudrate_, uint32_t config_, uint8_t retries_){
+	#ifndef UNITTEST
+	rs485comm.change_config( mode_, baudrate_, config_, retries_);
+	#endif
+}
+
 #ifdef UNITTEST
 char response[256];
 uint8_t len_response = 0;

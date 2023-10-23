@@ -15,6 +15,10 @@ void setup() {
 
   modbusrtu.setup(&Serial1,RS485_GPIO_RX,RS485_GPIO_TX,RS485_GPIO_RTS);
   modbusrtu.begin(1,9600,SERIAL_8N1);
+
+  modbusrtu.change_config(1,115200,SERIAL_8N1);
+
+  modbusrtu.change_config(1,9600,SERIAL_8N1);
 }
 
 uint8_t loop_counter = 1;

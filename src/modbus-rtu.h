@@ -33,7 +33,8 @@ class ModbusRTU {
 public:
 	ModbusRTU(){};
 	static void setup(HardwareSerial* serial, uint8_t rx, uint8_t tx, uint8_t rts);
-	static void begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, uint8_t retries_);
+	static void begin(int8_t mode_, uint32_t baudrate_, uint32_t config_, uint8_t retries_=3);
+	static void change_config(int8_t mode_, uint32_t baudrate_, uint32_t config_, uint8_t retries_=3);
 	#ifdef UNITTEST
 	bool rs485_set_response(uint8_t* data, uint16_t size);
 	#endif
